@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin · Senzu Host</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #060910; --surface: #0b0f1a; --card: #0f1525;
+      --card2: #131929; --border: #1a2235; --border2: #202d42;
+      --accent: #6366f1; --accent-d: #4f52cc; --accent-g: rgba(99,102,241,.12);
+      --text: #e2e8f0; --sub: #64748b; --muted: #2d3f58;
+      --ok: #10b981; --ok-g: rgba(16,185,129,.1); --ok-b: rgba(16,185,129,.25);
+      --warn: #f59e0b; --warn-g: rgba(245,158,11,.1); --warn-b: rgba(245,158,11,.25);
+      --danger: #f43f5e; --danger-g: rgba(244,63,94,.1); --danger-b: rgba(244,63,94,.25);
+      --gold: #fbbf24;
+      --sidebar-w: 220px;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { display: flex; flex-direction: column; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      height: 52px; flex-shrink: 0;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 20px; gap: 16px;
+      z-index: 50;
+    }
+    .topbar-brand { display: flex; align-items: center; gap: 9px; width: var(--sidebar-w); flex-shrink: 0; }
+    .logo-mark { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .logo-mark svg { width: 14px; height: 14px; color: #fff; }
+    .logo-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14.5px; letter-spacing: -.2px; }
+    .topbar-badge {
+      font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600;
+      background: var(--accent-g); color: var(--accent);
+      border: 1px solid rgba(99,102,241,.25); border-radius: 4px;
+      padding: 2px 7px; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .topbar-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border2);
+      background: transparent; color: var(--sub); font-family: inherit;
+      font-size: 12px; font-weight: 500; cursor: pointer; transition: all .2s;
+    }
+    .topbar-btn:hover { background: var(--card); color: var(--text); }
+    .topbar-btn svg { width: 13px; height: 13px; }
+    .topbar-btn.danger { color: var(--danger); border-color: var(--danger-b); }
+    .topbar-btn.danger:hover { background: var(--danger-g); }
+
+    /* ── LAYOUT ── */
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 16px 12px;
+      overflow-y: auto;
+    }
+    .nav-section-label {
+      font-size: 9.5px; font-weight: 700; color: var(--muted);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 0 10px; margin: 8px 0 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: 7px; border: none;
+      background: transparent; color: var(--sub); font-family: inherit;
+      font-size: 13px; font-weight: 500; cursor: pointer; width: 100%;
+      text-align: left; transition: all .15s;
+    }
+    .nav-item svg { width: 15px; height: 15px; flex-shrink: 0; stroke-width: 2; }
+    .nav-item:hover { background: var(--card2); color: var(--text); }
+    .nav-item.active { background: var(--accent-g); color: var(--accent); }
+    .nav-item.active svg { stroke: var(--accent); }
+    .nav-badge {
+      margin-left: auto; font-size: 10px; font-weight: 700;
+      background: var(--accent-g); color: var(--accent);
+      border-radius: 10px; padding: 1px 6px; min-width: 18px; text-align: center;
+    }
+    .nav-sep { height: 1px; background: var(--border); margin: 8px 0; }
+
+    /* ── MAIN ── */
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .main-inner { padding: 24px 28px; flex: 1; }
+
+    /* ── PAGE HEADER ── */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .page-header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: -.3px; }
+    .page-header .sub { font-size: 12.5px; color: var(--sub); margin-top: 2px; }
+
+    /* ── STAT CARDS ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px 18px; position: relative; overflow: hidden;
+    }
+    .stat-card::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity .2s; }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-label { font-size: 10.5px; font-weight: 600; color: var(--sub); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .stat-label svg { width: 12px; height: 12px; }
+    .stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; color: #fff; line-height: 1; margin-bottom: 8px; }
+    .stat-row { display: flex; gap: 12px; }
+    .stat-sub { font-size: 11px; color: var(--sub); }
+    .stat-sub b { font-weight: 600; }
+    .stat-sub b.ok { color: var(--ok); }
+    .stat-sub b.warn { color: var(--warn); }
+    .stat-sub b.danger { color: var(--danger); }
+    .stat-sub b.accent { color: var(--accent); }
+    .stat-accent-line { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+
+    /* ── CONTENT AREA ── */
+    .content-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; margin-bottom: 20px;
+    }
+    .content-header {
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .content-title { font-family: 'Space Grotesk', sans-serif; font-size: 13.5px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .content-title svg { width: 14px; height: 14px; color: var(--accent); }
+    .count-badge { font-size: 11px; font-weight: 600; background: var(--card2); border: 1px solid var(--border2); border-radius: 6px; padding: 2px 8px; color: var(--sub); }
+
+    /* search */
+    .search-wrap { position: relative; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--muted); pointer-events: none; }
+    .search-input {
+      padding: 7px 12px 7px 30px; border-radius: 7px;
+      border: 1px solid var(--border2); background: var(--card2);
+      color: var(--text); font-family: inherit; font-size: 12.5px; outline: none;
+      width: 200px; transition: border .2s, box-shadow .2s;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-g); }
+
+    /* btn small */
+    .btn-sm {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border2);
+      background: transparent; color: var(--sub); font-family: inherit;
+      font-size: 11.5px; font-weight: 500; cursor: pointer; transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn-sm svg { width: 12px; height: 12px; }
+    .btn-sm:hover { background: var(--card2); color: var(--text); }
+    .btn-sm.accent { background: var(--accent); color: #fff; border-color: transparent; }
+    .btn-sm.accent:hover { background: var(--accent-d); }
+    .btn-sm.ok-btn { color: var(--ok); border-color: var(--ok-b); }
+    .btn-sm.ok-btn:hover { background: var(--ok-g); }
+    .btn-sm.warn-btn { color: var(--warn); border-color: var(--warn-b); }
+    .btn-sm.warn-btn:hover { background: var(--warn-g); }
+    .btn-sm.danger-btn { color: var(--danger); border-color: var(--danger-b); }
+    .btn-sm.danger-btn:hover { background: var(--danger-g); }
+    .btn-icon { padding: 5px 7px; }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    th { padding: 9px 16px; text-align: left; font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; background: var(--card2); border-bottom: 1px solid var(--border); }
+    td { padding: 12px 16px; font-size: 12.5px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.015); }
+    .col-mono { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--sub); }
+    .col-name { font-weight: 600; color: var(--text); }
+    .col-owner { color: var(--accent); font-size: 12px; }
+    .col-startup { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--sub); }
+    .col-actions { text-align: right; white-space: nowrap; }
+    .col-actions .btn-group { display: inline-flex; gap: 6px; }
+
+    /* ── STATUS PILL ── */
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px; border: 1px solid transparent;
+    }
+    .pill .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .pill.running { background: var(--ok-g); color: var(--ok); border-color: var(--ok-b); }
+    .pill.running .dot { background: var(--ok); box-shadow: 0 0 5px var(--ok); }
+    .pill.installing { background: var(--warn-g); color: var(--warn); border-color: var(--warn-b); }
+    .pill.installing .dot { background: var(--warn); }
+    .pill.banned { background: var(--danger-g); color: var(--danger); border-color: var(--danger-b); }
+    .pill.banned .dot { background: var(--danger); }
+    .pill.offline { background: rgba(255,255,255,.03); color: var(--sub); border-color: var(--border2); }
+    .pill.offline .dot { background: var(--muted); }
+
+    /* ── USER TAG ── */
+    .utag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px; font-size: 10.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px; border: 1px solid transparent;
+    }
+    .utag.active { background: var(--ok-g); color: var(--ok); border-color: var(--ok-b); }
+    .utag.banned { background: var(--danger-g); color: var(--danger); border-color: var(--danger-b); }
+    .utag.premium { background: rgba(251,191,36,.08); color: var(--gold); border-color: rgba(251,191,36,.2); }
+    .utag.normal { background: rgba(255,255,255,.03); color: var(--sub); border-color: var(--border2); }
+
+    /* empty state */
+    .empty-state { padding: 48px 20px; text-align: center; }
+    .empty-state svg { width: 36px; height: 36px; color: var(--muted); margin-bottom: 12px; }
+    .empty-state p { font-size: 13px; color: var(--sub); }
+
+    /* ── TOAST ── */
+    #toastZone { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 320px; pointer-events: none; }
+    .toast {
+      background: var(--card2); border-radius: 8px; padding: 11px 14px;
+      font-size: 12.5px; display: flex; align-items: center; gap: 9px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5); pointer-events: all;
+      border-left: 3px solid var(--accent); animation: slideUp .25s ease;
+    }
+    .toast.ok  { border-left-color: var(--ok); }
+    .toast.err { border-left-color: var(--danger); }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── CONFIRM DIALOG ── */
+    .confirm-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
+      z-index: 999; display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .confirm-box {
+      width: 100%; max-width: 340px; background: var(--card); border: 1px solid var(--border2);
+      border-radius: 12px; padding: 22px; box-shadow: 0 24px 48px rgba(0,0,0,.6);
+      animation: slideUp .2s ease;
+    }
+    .confirm-icon { width: 38px; height: 38px; border-radius: 50%; background: var(--danger-g); border: 1px solid var(--danger-b); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+    .confirm-icon svg { width: 18px; height: 18px; color: var(--danger); }
+    .confirm-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .confirm-msg { font-size: 13px; color: var(--sub); line-height: 1.55; margin-bottom: 20px; white-space: pre-wrap; }
+    .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+      .sidebar { display: none; }
+      .main-inner { padding: 16px; }
+      .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .stat-num { font-size: 22px; }
+
+      /* Topbar 2 tầng trên mobile */
+      .topbar {
+        height: auto;
+        flex-wrap: wrap;
+        padding: 0 14px;
+        gap: 0;
+      }
+      .topbar-brand {
+        width: auto;
+        flex: 1;
+        padding: 10px 0;
+      }
+      .topbar-right {
+        margin-left: 0;
+        gap: 4px;
+        padding: 10px 0;
+      }
+      /* Ẩn text trong button, chỉ giữ icon */
+      .topbar-btn span.btn-label { display: none; }
+      .topbar-btn { padding: 6px 8px; }
+
+      /* Tầng 2: mob-nav full width */
+      .mob-nav {
+        display: flex !important;
+        width: 100%;
+        border-top: 1px solid var(--border);
+        padding: 6px 0 8px;
+        gap: 6px;
+      }
+      .mob-nav button {
+        flex: 1;
+        text-align: center;
+      }
+    }
+    .mob-nav { display: none; gap: 4px; }
+    .mob-nav button { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border2); background: transparent; color: var(--sub); font-family: inherit; font-size: 12px; cursor: pointer; }
+    .mob-nav button.active { background: var(--accent-g); color: var(--accent); border-color: transparent; }
+
+    /* views */
+    .view { display: none; }
+    .view.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    </div>
+    <span class="logo-name">Senzu Host</span>
+    <span class="topbar-badge">Admin</span>
+  </div>
+
+  <div class="mob-nav" id="mobNav">
+    <button class="active" onclick="switchView('dashboard',this)">Overview</button>
+    <button onclick="switchView('servers',this)">Servers</button>
+    <button onclick="switchView('users',this)">Users</button>
+  </div>
+
+  <div class="topbar-right">
+    <button class="topbar-btn" onclick="refreshAll()" id="syncBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      <span class="btn-label">Sync</span>
+    </button>
+    <button class="topbar-btn" onclick="location.href='/'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="btn-label">Panel</span>
+    </button>
+    <button class="topbar-btn danger" onclick="location.href='/logout'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="btn-label">Logout</span>
+    </button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-item active" onclick="switchView('dashboard',this)" id="nav-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+
+    <div class="nav-sep"></div>
+    <div class="nav-section-label">Management</div>
+
+    <button class="nav-item" onclick="switchView('servers',this)" id="nav-servers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      Servers
+      <span class="nav-badge" id="srvBadge">–</span>
+    </button>
+
+    <button class="nav-item" onclick="switchView('users',this)" id="nav-users">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+      <span class="nav-badge" id="userBadge">–</span>
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-inner">
+
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="page-header">
+          <div>
+            <h1>Overview</h1>
+            <div class="sub">System snapshot — live data</div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+              Total Servers
+            </div>
+            <div class="stat-num" id="st-total">–</div>
+            <div class="stat-row">
+              <div class="stat-sub"><b class="ok" id="st-run">–</b> running</div>
+              <div class="stat-sub"><b class="warn" id="st-ins">–</b> starting</div>
+            </div>
+            <div class="stat-accent-line" style="background: linear-gradient(90deg, var(--accent), transparent);"></div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Online Rate
+            </div>
+            <div class="stat-num" id="st-rate">–%</div>
+            <div class="stat-row">
+              <div class="stat-sub"><b class="danger" id="st-ban">–</b> banned</div>
+            </div>
+            <div class="stat-accent-line" style="background: linear-gradient(90deg, var(--ok), transparent);"></div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              Total Users
+            </div>
+            <div class="stat-num" id="u-total">–</div>
+            <div class="stat-row">
+              <div class="stat-sub"><b class="ok" id="u-active">–</b> active</div>
+              <div class="stat-sub"><b class="accent" id="u-premium">–</b> premium</div>
+            </div>
+            <div class="stat-accent-line" style="background: linear-gradient(90deg, #6366f1, transparent);"></div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Capacity
+            </div>
+            <div class="stat-num">5</div>
+            <div class="stat-row">
+              <div class="stat-sub">user slots</div>
+            </div>
+            <div class="stat-accent-line" style="background: linear-gradient(90deg, var(--warn), transparent);"></div>
+          </div>
+        </div>
+
+        <!-- Quick server list on dashboard -->
+        <div class="content-card">
+          <div class="content-header">
+            <div class="content-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+              Active Servers
+            </div>
+            <button class="btn-sm" onclick="switchView('servers', document.getElementById('nav-servers'))">View all →</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Server</th><th>Owner</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+              <tbody id="dashServersT"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVERS -->
+      <div class="view" id="view-servers">
+        <div class="page-header">
+          <div>
+            <h1>Servers</h1>
+            <div class="sub">Manage all deployed instances</div>
+          </div>
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" type="text" id="searchServer" placeholder="Search name or folder…" oninput="filterServers()">
+          </div>
+        </div>
+        <div class="content-card">
+          <div class="content-header">
+            <div class="content-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+              All Servers
+            </div>
+            <span class="count-badge" id="serverCount">0</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Folder</th><th>Display Name</th><th>Owner</th><th>Startup</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+              <tbody id="serversT"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div class="view" id="view-users">
+        <div class="page-header">
+          <div>
+            <h1>Users</h1>
+            <div class="sub">Accounts &amp; permissions</div>
+          </div>
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="search-input" type="text" id="searchUser" placeholder="Search username…" oninput="filterUsers()">
+          </div>
+        </div>
+        <div class="content-card">
+          <div class="content-header">
+            <div class="content-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              All Users
+            </div>
+            <span class="count-badge" id="userCount">0</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Username</th><th>Email</th><th>Servers</th><th>Status</th><th>Plan</th><th style="text-align:right">Actions</th></tr></thead>
+              <tbody id="usersT"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-inner -->
+  </main>
+</div><!-- /layout -->
+
+<!-- TOAST ZONE -->
+<div id="toastZone"></div>
+
+<!-- CONFIRM -->
+<div class="confirm-backdrop" id="confirmBd">
+  <div class="confirm-box">
+    <div class="confirm-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="confirm-title" id="confirmTitle">Confirm action</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-actions">
+      <button class="btn-sm" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-sm danger-btn" id="confirmYes">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let serversCache = [], usersCache = [];
+
+// ── Utils ────────────────────────────────────────────────
+function esc(s) { return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+function toast(msg, type='info') {
+  const z = document.getElementById('toastZone');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type === 'success' ? 'ok' : type === 'error' ? 'err' : '');
+  t.textContent = msg;
+  z.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+let confirmCb = null;
+function confirm_(title, msg, cb) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCb = cb;
+  document.getElementById('confirmBd').style.display = 'flex';
+  document.getElementById('confirmYes').onclick = () => { closeConfirm(); cb(); };
+}
+function closeConfirm() { document.getElementById('confirmBd').style.display = 'none'; }
+
+// ── Navigation ────────────────────────────────────────────
+function switchView(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item, .mob-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  // sync mob nav
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+}
+
+// ── Status rendering ─────────────────────────────────────
+function pillHtml(status) {
+  const s = (status||'').toLowerCase();
+  if (s === 'running')    return '<span class="pill running"><span class="dot"></span>Running</span>';
+  if (s === 'installing' || s === 'starting') return '<span class="pill installing"><span class="dot"></span>Starting</span>';
+  if (s === 'banned')     return '<span class="pill banned"><span class="dot"></span>Banned</span>';
+  return '<span class="pill offline"><span class="dot"></span>Offline</span>';
+}
+
+// ── Fetch ─────────────────────────────────────────────────
+async function refreshStats() {
+  try {
+    const d = await fetch('/api/admin/quickstats').then(r => r.json());
+    const s = d.stats || {};
+    document.getElementById('st-total').textContent = s.servers_total ?? '–';
+    document.getElementById('st-run').textContent   = s.servers_running ?? '–';
+    document.getElementById('st-ins').textContent   = s.servers_installing ?? '–';
+    document.getElementById('st-ban').textContent   = s.servers_banned ?? '–';
+    document.getElementById('u-total').textContent   = s.users_total ?? '–';
+    document.getElementById('u-active').textContent  = s.users_active ?? '–';
+    document.getElementById('u-premium').textContent = s.users_premium ?? '–';
+    const total = s.servers_total || 0;
+    const rate = total > 0 ? Math.round((s.servers_running / total) * 100) : 0;
+    document.getElementById('st-rate').textContent = rate + '%';
+    document.getElementById('srvBadge').textContent  = s.servers_total ?? '–';
+    document.getElementById('userBadge').textContent = s.users_total ?? '–';
+  } catch(e) {}
+}
+
+async function refreshServers() {
+  try {
+    const d = await fetch('/api/admin/servers').then(r => r.json());
+    serversCache = d.servers || [];
+    document.getElementById('serverCount').textContent = serversCache.length;
+    renderServers(serversCache);
+    renderDashServers(serversCache);
+  } catch(e) {}
+}
+
+async function refreshUsers() {
+  try {
+    const d = await fetch('/api/admin/users').then(r => r.json());
+    usersCache = d.users || [];
+    document.getElementById('userCount').textContent = usersCache.length;
+    renderUsers(usersCache);
+  } catch(e) {}
+}
+
+// ── Render servers ────────────────────────────────────────
+function renderServers(arr) {
+  const tbody = document.getElementById('serversT');
+  if (!arr.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg><p>No servers found.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = arr.map(s => {
+    const banned = s.status === 'Banned';
+    const kS = esc(s.key), tS = esc(s.title);
+    return `<tr style="${banned ? 'opacity:.5' : ''}">
+      <td class="col-mono">${esc(s.folder)}</td>
+      <td class="col-name">${tS}</td>
+      <td class="col-owner">${esc(s.owner)}</td>
+      <td class="col-startup">${esc(s.startup_file) || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${pillHtml(s.status)}</td>
+      <td class="col-actions">
+        <div class="btn-group">
+          ${banned
+            ? `<button class="btn-sm ok-btn btn-icon" title="Unban" onclick="banServer('${kS}',false)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button>`
+            : `<button class="btn-sm warn-btn btn-icon" title="Ban" onclick="banServer('${kS}',true)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></button>`
+          }
+          <button class="btn-sm danger-btn btn-icon" title="Delete" onclick="deleteServer('${kS}','${tS}')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDashServers(arr) {
+  const tbody = document.getElementById('dashServersT');
+  const running = arr.filter(s => s.status === 'Running' || s.status === 'Installing' || s.status === 'Starting');
+  const show = running.length > 0 ? running : arr.slice(0, 5);
+  if (!show.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><p>No servers yet.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = show.map(s => {
+    const kS = esc(s.key), tS = esc(s.title);
+    return `<tr>
+      <td class="col-name">${tS}</td>
+      <td class="col-owner">${esc(s.owner)}</td>
+      <td>${pillHtml(s.status)}</td>
+      <td class="col-actions">
+        <div class="btn-group">
+          ${s.status === 'Banned'
+            ? `<button class="btn-sm ok-btn" onclick="banServer('${kS}',false)">Unban</button>`
+            : `<button class="btn-sm warn-btn" onclick="banServer('${kS}',true)">Ban</button>`}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Render users ──────────────────────────────────────────
+function renderUsers(arr) {
+  const tbody = document.getElementById('usersT');
+  if (!arr.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>No users found.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = arr.map(u => {
+    const uS = esc(u.username);
+    return `<tr style="${!u.active ? 'opacity:.5' : ''}">
+      <td class="col-name">${uS}</td>
+      <td style="color:var(--sub);font-size:12px">${esc(u.email)||'—'}</td>
+      <td style="font-weight:600">${u.servers}</td>
+      <td>${u.active ? '<span class="utag active">Active</span>' : '<span class="utag banned">Banned</span>'}</td>
+      <td>${u.premium ? '<span class="utag premium">⭐ Premium</span>' : '<span class="utag normal">Free</span>'}</td>
+      <td class="col-actions">
+        <div class="btn-group">
+          <button class="btn-sm ${u.premium ? 'warn-btn' : 'btn-sm'}" onclick="setPremium('${uS}',${!u.premium})" title="${u.premium ? 'Revoke Premium' : 'Grant Premium'}">
+            ${u.premium ? 'Revoke ⭐' : 'Grant ⭐'}
+          </button>
+          <button class="btn-sm ${u.active ? 'danger-btn' : 'ok-btn'}" onclick="setActive('${uS}',${!u.active})">
+            ${u.active ? 'Ban' : 'Unban'}
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Filter ────────────────────────────────────────────────
+function filterServers() {
+  const q = (document.getElementById('searchServer').value||'').toLowerCase();
+  renderServers(q ? serversCache.filter(s => (s.title||'').toLowerCase().includes(q) || (s.folder||'').toLowerCase().includes(q)) : serversCache);
+}
+function filterUsers() {
+  const q = (document.getElementById('searchUser').value||'').toLowerCase();
+  renderUsers(q ? usersCache.filter(u => (u.username||'').toLowerCase().includes(q)) : usersCache);
+}
+
+// ── Actions ───────────────────────────────────────────────
+async function banServer(key, banned) {
+  await fetch('/api/admin/server/ban', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({key, banned}) });
+  toast(banned ? 'Server banned.' : 'Server unbanned.', 'success');
+  refreshAll();
+}
+
+function deleteServer(key, title) {
+  confirm_('Delete server', `This will permanently delete "${title}" and all its files. This cannot be undone.`, async () => {
+    const d = await fetch('/api/admin/server/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({key}) }).then(r=>r.json()).catch(()=>({}));
+    toast(d.success ? 'Server deleted.' : (d.message || 'Delete failed.'), d.success ? 'success' : 'error');
+    refreshAll();
+  });
+}
+
+async function setActive(username, active) {
+  await fetch('/api/admin/user/update', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, active}) });
+  toast(`User ${username} ${active ? 'unbanned' : 'banned'}.`, 'success');
+  refreshUsers(); refreshStats();
+}
+
+async function setPremium(username, premium) {
+  await fetch('/api/admin/user/update', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, premium}) });
+  toast(`${premium ? 'Granted' : 'Revoked'} premium for ${username}.`, 'success');
+  refreshUsers(); refreshStats();
+}
+
+async function refreshAll() {
+  const btn = document.getElementById('syncBtn');
+  btn.textContent = 'Syncing…'; btn.disabled = true;
+  await Promise.all([refreshStats(), refreshServers(), refreshUsers()]);
+  btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Sync`;
+  btn.disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', refreshAll);
+</script>
+</body>
+</html>

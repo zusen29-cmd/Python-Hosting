@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login · Senzu Host</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080b14; --surface: #0d1220; --card: #111827;
+      --border: #1e2a40; --border2: #253044;
+      --accent: #6366f1; --accent-d: #4f52cc; --accent-g: rgba(99,102,241,.15);
+      --text: #e2e8f0; --sub: #64748b; --muted: #334155;
+      --ok: #10b981; --danger: #f43f5e;
+    }
+    html, body { height: 100%; }
+    body { display: flex; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+    /* LEFT */
+    .panel-left {
+      width: 400px; flex-shrink: 0;
+      background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 48px 44px; position: relative; overflow: hidden;
+    }
+    .panel-left::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: radial-gradient(circle, #1e2a40 1px, transparent 1px);
+      background-size: 24px 24px; opacity: .45; pointer-events: none;
+    }
+    .panel-left::after {
+      content: ''; position: absolute; top: -100px; right: -100px;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(99,102,241,.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .brand { position: relative; z-index: 1; }
+    .brand-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 52px; }
+    .logo-mark {
+      width: 34px; height: 34px; background: var(--accent); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .logo-mark svg { width: 17px; height: 17px; color: #fff; }
+    .logo-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: -.2px; }
+    .brand-heading { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; line-height: 1.3; letter-spacing: -.5px; color: #fff; margin-bottom: 12px; }
+    .brand-sub { font-size: 13.5px; line-height: 1.65; color: var(--sub); }
+
+    .terminal-block {
+      position: relative; z-index: 1;
+      background: #060810; border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.85;
+    }
+    .tbar { display: flex; gap: 6px; margin-bottom: 10px; }
+    .tbar span { width: 9px; height: 9px; border-radius: 50%; }
+    .tbar .r { background: #f43f5e; } .tbar .y { background: #f59e0b; } .tbar .g { background: var(--ok); }
+    .t-prompt { color: var(--accent); } .t-cmd { color: #94a3b8; }
+    .t-ok { color: var(--ok); } .t-dim { color: #475569; } .t-val { color: #cbd5e1; }
+
+    .panel-left-footer { position: relative; z-index: 1; font-size: 11px; color: var(--muted); }
+
+    /* RIGHT */
+    .panel-right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+    .form-card { width: 100%; max-width: 350px; }
+    .form-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .form-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 4px; letter-spacing: -.3px; }
+    .form-desc { font-size: 13px; color: var(--sub); margin-bottom: 28px; line-height: 1.5; }
+
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--sub); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }
+    .input-wrap { position: relative; }
+    .input-wrap .ico {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); width: 14px; height: 14px; pointer-events: none; transition: color .2s;
+    }
+    .field input {
+      width: 100%; padding: 10.5px 12px 10.5px 36px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 7px;
+      color: var(--text); font-family: inherit; font-size: 13.5px;
+      outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    .field input::placeholder { color: var(--muted); }
+    .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-g); }
+    .field input:focus ~ .ico { color: var(--accent); }
+    .field.pwd input { padding-right: 38px; }
+
+    .eye-btn {
+      position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--muted);
+      padding: 3px; display: flex; align-items: center; transition: color .2s;
+    }
+    .eye-btn:hover { color: var(--sub); }
+
+    .btn-submit {
+      width: 100%; padding: 11.5px; margin-top: 6px;
+      background: var(--accent); color: #fff; border: none; border-radius: 7px;
+      font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; letter-spacing: .2px;
+      transition: background .2s, transform .1s, box-shadow .2s;
+      box-shadow: 0 4px 18px rgba(99,102,241,.28);
+    }
+    .btn-submit:hover { background: var(--accent-d); transform: translateY(-1px); box-shadow: 0 6px 22px rgba(99,102,241,.38); }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .msg { min-height: 16px; margin-top: 10px; font-size: 12.5px; color: var(--danger); text-align: center; }
+    .form-footer { margin-top: 22px; text-align: center; font-size: 13px; color: var(--sub); }
+    .form-footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .form-footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 680px) {
+      body { flex-direction: column; }
+      .panel-left { width: 100%; padding: 24px 20px; border-right: none; border-bottom: 1px solid var(--border); }
+      .brand-heading { font-size: 20px; }
+      .brand-sub, .terminal-block, .panel-left-footer { display: none; }
+      .brand-logo { margin-bottom: 0; }
+      .panel-right { padding: 28px 20px 48px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="panel-left">
+  <div class="brand">
+    <div class="brand-logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <span class="logo-name">Senzu Host</span>
+    </div>
+    <div class="brand-heading">Deploy &amp; manage<br>Python servers.</div>
+    <div class="brand-sub">Lightweight hosting panel — start, monitor, and control your bots and services from one place.</div>
+  </div>
+
+  <div class="terminal-block">
+    <div class="tbar"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+    <div><span class="t-prompt">$</span> <span class="t-cmd">senzu start bot.py</span></div>
+    <div><span class="t-dim">[SYS] Installing requirements...</span></div>
+    <div><span class="t-ok">✓</span> <span class="t-dim">4 packages installed</span></div>
+    <div><span class="t-ok">✓</span> <span class="t-dim">Process running <span class="t-val">PID 3821</span></span></div>
+    <div><span class="t-dim">Uptime: <span class="t-val">2d 14h 7m</span> · RAM: <span class="t-val">48.2 MB</span></span></div>
+  </div>
+
+  <div class="panel-left-footer">© 2025 Senzu Host</div>
+</div>
+
+<div class="panel-right">
+  <div class="form-card">
+    <div class="form-eyebrow">Welcome back</div>
+    <div class="form-title">Sign in</div>
+    <div class="form-desc">Enter your credentials to access the panel.</div>
+
+    <div class="field">
+      <label>Username</label>
+      <div class="input-wrap">
+        <input type="text" id="u" placeholder="your_username" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+    </div>
+
+    <div class="field pwd">
+      <label>Password</label>
+      <div class="input-wrap">
+        <input type="password" id="p" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <button class="eye-btn" onclick="togglePwd()" type="button" aria-label="Toggle password">
+          <svg id="eyeIco" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="doLogin()" id="btnLogin">Sign in</button>
+    <div class="msg" id="m"></div>
+
+    <div class="form-footer">Don't have an account? <a href="/create">Create one</a></div>
+  </div>
+</div>
+
+<script>
+  async function doLogin() {
+    const m = document.getElementById('m'), btn = document.getElementById('btnLogin');
+    const u = document.getElementById('u').value.trim();
+    const p = document.getElementById('p').value;
+    if (!u || !p) { m.textContent = 'Please fill in all fields.'; return; }
+    btn.textContent = 'Signing in…'; btn.disabled = true; m.textContent = '';
+    try {
+      const r = await fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u,password:p}) });
+      const d = await r.json().catch(() => ({success:false, message:'Server error'}));
+      if (!r.ok || !d.success) { m.textContent = d.message || 'Login failed.'; btn.textContent = 'Sign in'; btn.disabled = false; return; }
+      location.href = d.is_admin ? '/admin' : '/';
+    } catch(e) { m.textContent = 'Connection error.'; btn.textContent = 'Sign in'; btn.disabled = false; }
+  }
+  function togglePwd() {
+    const inp = document.getElementById('p'), ico = document.getElementById('eyeIco');
+    const show = inp.type === 'password'; inp.type = show ? 'text' : 'password';
+    ico.innerHTML = show
+      ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+      : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  }
+</script>
+</body>
+</html>

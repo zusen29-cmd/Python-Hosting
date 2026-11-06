@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Senzu Hosting Python</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg0: #0f111a; --bg1: #151822; --glass: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.06);
+      --accent: #2563eb; --accent-glow: rgba(37, 99, 235, 0.3);
+      --danger: #ef4444; --ok: #10b981; --warn: #f59e0b;
+      --muted: #64748b; --text: #f8fafc;
+      --shadow: 0 10px 30px -10px rgba(0,0,0,0.8); 
+      --radius: 12px; --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; } html, body { height: 100%; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg0); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    body {
+      margin: 0; color: var(--text); font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg0);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ảnh nền full toàn trang kể cả topbar */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(to bottom, rgba(8,10,20,0.30) 0%, rgba(8,10,20,0.20) 40%, rgba(8,10,20,0.55) 80%, rgba(8,10,20,0.75) 100%),
+        url('https://i.postimg.cc/76x9DCPb/hinh-nen-anime-4k-cho-dien-thoai-20-26faf9cf2d.jpg') no-repeat center top;
+      background-size: cover;
+    }
+
+    .page-body > * { position: relative; z-index: 1; }
+
+    /* ══ TOPBAR MỚI: 2 tầng gọn ══ */
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(6, 8, 18, 0.55);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    /* Tầng trên: brand + info widget + actions */
+    .topbar-main {
+      max-width: 1200px; margin: 0 auto;
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 12px;
+      justify-content: space-between;
+    }
+
+    /* Brand */
+    .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .brand .logo {
+      width: 36px; height: 36px; border-radius: 8px;
+      cursor: pointer; flex-shrink: 0;
+      background: url('https://i.postimg.cc/9MK8dyXJ/hinh-nen-anime-44.jpg') no-repeat center;
+      background-size: cover;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    }
+    .brand .title { color: #fff; font-size: 14px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; line-height: 1.2; }
+    .brand .sub { display: block; font-weight: 500; color: var(--accent); font-size: 10px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+
+    /* ── Info pill: clock + weather tích hợp ── */
+    .info-widget {
+      display: flex; align-items: center; gap: 0;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      flex: 1; max-width: 380px; min-width: 0;
+    }
+    .info-block {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 6px 12px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      flex: 1; min-width: 0;
+    }
+    .info-block:last-child { border-right: none; }
+    .info-label {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: #475569; line-height: 1;
+      margin-bottom: 2px;
+    }
+    .info-value {
+      font-size: 13px; font-weight: 700; color: #f1f5f9;
+      line-height: 1; white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .info-value.clock-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #fff; }
+    .info-value.date-val { font-size: 11px; color: #94a3b8; font-weight: 600; }
+    .info-value.weather-val { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+    .weather-icon { font-size: 15px; line-height: 1; }
+    .weather-temp { color: #f1f5f9; font-weight: 700; }
+    .weather-desc { color: #64748b; font-size: 10px; font-weight: 600; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Actions */
+    .actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .btn { border: 1px solid var(--border); background: var(--glass); color: var(--text); padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; font-size: 11.5px; transition: all 0.2s ease; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .btn:hover { background: rgba(255,255,255,0.08); }
+    .btn-primary { background: #e2e8f0; color: #020617; border: none; }
+    .btn-primary:hover { background: #fff; }
+    .btn-danger { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+
+    /* CSS cho các nút nhỏ trong bảng File Manager */
+    .btn-mini {
+      padding: 6px 12px;
+      font-size: 11.5px;
+      border-radius: 6px;
+      letter-spacing: 0.3px;
+    }
+    .btn-mini.btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .btn-mini.btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .container { max-width: 1200px; margin: 0 auto 60px; padding: 24px 20px 0; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .card { background: rgba(15, 18, 30, 0.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); cursor: pointer; transition: all 0.2s ease; }
+    .card:hover { background: rgba(20, 24, 40, 0.7); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+    .srv-title { font-weight: 800; font-size: 15px; margin: 0; color: #fff; }
+    .srv-sub { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .card-footer .pill { margin-top: 0; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .pill.running { color: var(--ok); } .pill.running .dot { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+    .pill.installing { color: var(--warn); } .pill.installing .dot { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+    .pill.banned { color: var(--danger); } .pill.banned .dot { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+    .pill.offline { color: var(--muted); } .pill.offline .dot { background: var(--muted); }
+
+    /* ── Card Remove Button & Expiry Warning ── */
+    .card { position: relative; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+    .btn-remove {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: rgba(252, 165, 165, 0.75);
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .btn-remove:hover {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+    }
+    .expiry-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .expiry-badge.warn {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #fbbf24;
+    }
+    .expiry-badge.critical {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #f87171;
+    }
+
+    #serverView { display: none; }
+    
+    .action-bar { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+    .btn-act { flex: 1; min-width: 100px; padding: 10px 14px; border: none; border-radius: 6px; font-weight: 700; font-size: 12px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.5px; }
+    .btn-act:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-act:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: none; }
+    .btn-act.start { background: #10b981; } 
+    .btn-act.stop { background: #ef4444; } 
+    .btn-act.restart { background: #f59e0b; } 
+    .btn-act.clear { background: #334155; } 
+
+    .tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; padding: 0 10px; overflow-x: auto; }
+    .tab { background: transparent; color: var(--muted); border: none; border-bottom: 2px solid transparent; padding: 12px 10px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+    .tab:hover { color: #f8fafc; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .grid-layout { display: flex; flex-direction: column; gap: 20px; }
+    
+    .terminal-wrapper { background: rgba(3,5,8,0.75); backdrop-filter: blur(12px); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; overflow: hidden; height: 480px; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+    .console { flex: 1; overflow-y: auto; overflow-x: hidden; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; color: #cbd5e1; padding: 16px; }
+    .console::-webkit-scrollbar-track { background: transparent; }
+    
+    .cmd-box { display: flex; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border); padding: 10px 14px; gap: 10px; align-items: center; }
+    .cmd-box .prompt { color: var(--ok); font-weight: 900; font-family: 'JetBrains Mono', monospace; }
+    .cmd-box input { flex: 1; background: transparent; border: none; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none; }
+    .cmd-box input::placeholder { color: rgba(255,255,255,0.2); font-style: italic; }
+    .cmd-box .btn-send { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .cmd-box .btn-send:hover { background: #3b82f6; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 4px; }
+    .stat-card { background: rgba(15, 18, 30, 0.55); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.09); border-radius: var(--radius-sm); padding: 16px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    .stat-card .label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .val { font-size: 14px; font-weight: 600; color: #f8fafc; word-break: break-all; }
+    .stat-card .val a { color: #3b82f6; text-decoration: none; cursor: pointer; font-weight: 500; }
+    .stat-card .val a:hover { text-decoration: underline; color: #60a5fa; }
+
+    .fm-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 20px; background: rgba(15, 18, 30, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.09); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+    .path { color: var(--text); font-size: 13px; display: flex; align-items: center; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; }
+    .crumb a { color: #2563eb; text-decoration: none; font-weight: 600; }
+    .crumb a:hover { text-decoration: underline; }
+    .crumb .sep { color: var(--muted); padding: 0 8px; }
+    
+    .table-wrapper { border: 1px solid rgba(255,255,255,0.09); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); background: rgba(15, 18, 30, 0.55); backdrop-filter: blur(12px); overflow: hidden; }
+    .table { width: 100%; border-collapse: collapse; text-align: left; }
+    .table th, .table td { padding: 14px 20px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .table th { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; background: rgba(0,0,0,0.2); }
+    .table tr:last-child td { border-bottom: none; }
+    .table tr:hover { background: rgba(255,255,255,0.02); }
+    .name-link { color: #e2e8f0; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+    .name-link svg { color: var(--muted); }
+    .name-link:hover { color: #2563eb; }
+    .name-link:hover svg { color: #2563eb; }
+    .row-actions { white-space: nowrap; text-align: right; }
+    
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+    .modal { width: 100%; max-width: 380px; background: var(--bg1); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); padding: 24px; animation: fadeIn 0.2s ease; }
+    .modal h3 { margin: 0 0 16px 0; font-size: 16px; color: #fff; }
+    .modal input { width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3); color: #fff; font-family: inherit; font-size: 13px; transition: border 0.2s; outline: none; }
+    .modal input:focus { border-color: #2563eb; }
+    
+    /* Giao diện Editor được nâng cấp hiển thị */
+    #editor-modal { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(10, 12, 18, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 60; 
+      padding: 0; /* Bỏ padding đi để mở rộng tối đa */
+    }
+    .editor { 
+      width: 100%; 
+      height: 100%; 
+      display: flex; 
+      flex-direction: column; 
+      animation: fadeIn 0.2s ease; 
+    }
+    .editor-top { padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(21, 24, 34, 0.9); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .editor-top .fn { font-weight: 600; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+
+    @media (max-width: 768px) {
+      .topbar-main { padding: 8px 14px; gap: 8px; flex-wrap: wrap; }
+      .brand .sub { max-width: 110px; font-size: 9.5px; }
+      .info-widget { order: 3; width: 100%; max-width: 100%; flex: none; }
+      .info-block { padding: 5px 8px; }
+      .info-value.clock-val { font-size: 13px; }
+      .info-value.date-val { font-size: 10px; }
+      .weather-desc { display: none; }
+      .actions { gap: 5px; }
+      .actions .btn { padding: 7px 10px; font-size: 11px; }
+
+      .container { padding: 20px 16px 0; margin: 0 auto 40px; }
+      .action-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+      .btn-act { width: 100%; padding: 12px 8px; font-size: 11px; }
+      .terminal-wrapper { height: 50vh; max-height: 420px; }
+      .console { font-size: 11.5px; padding: 12px; }
+      .cmd-box { padding: 10px; gap: 8px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .stat-card { padding: 14px 12px; }
+      .stat-card .val { font-size: 13px; }
+      .fm-top { flex-direction: column; align-items: stretch; padding: 14px; }
+      
+      /* Căn chỉnh lại Table cho màn hình nhỏ gọn và cân đối hơn */
+      .table thead { display: none; }
+      .table tr { display: flex; flex-wrap: wrap; align-items: center; padding: 14px; border-bottom: 1px solid var(--border); }
+      .table td { padding: 0; border: none; }
+      .table td:nth-child(1) { width: 100%; margin-bottom: 12px; font-size: 13px; }
+      .table td:nth-child(2) { flex: 1; font-size: 12px; color: var(--muted); }
+      
+      /* Căn chỉnh lại hàng chứa Action (Rename/Delete/Extract) */
+      .table td:nth-child(3) { display: flex; justify-content: flex-end; width: 100%; margin-top: 8px; }
+      .row-actions { display: flex; gap: 10px; width: 100%; justify-content: flex-end; }
+      .row-actions button { margin: 0; padding: 8px 14px; font-size: 12px; }
+      .card-footer { flex-wrap: wrap; gap: 8px; }
+      .btn-remove { font-size: 10px; padding: 5px 10px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topbar-main">
+      <!-- Brand -->
+      <div class="brand">
+        <div class="logo" role="button" tabindex="0" title="Home" onclick="location.href='/'"></div>
+        <div>
+          <div class="title">Senzu Host</div>
+          <span class="sub" id="pyHostTxt">Initializing...</span>
+        </div>
+      </div>
+
+      <!-- Info widget: clock / date / weather -->
+      <div class="info-widget" id="infoWidget">
+        <div class="info-block">
+          <div class="info-label">Thời gian</div>
+          <div class="info-value clock-val" id="clockVal">--:--:--</div>
+          <div class="info-value date-val" id="dateVal">--/--/----</div>
+        </div>
+        <div class="info-block" id="weatherBlock">
+          <div class="info-label">Thời tiết</div>
+          <div class="info-value weather-val">
+            <span class="weather-icon" id="wxIcon">⏳</span>
+            <div>
+              <div class="weather-temp" id="wxTemp">--°</div>
+              <div class="weather-desc" id="wxDesc">Đang tải...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button id="adminBtn" class="btn" style="display:none" onclick="location.href='/admin'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          Admin
+        </button>
+        <button id="homeBtn" class="btn" style="display:none" onclick="goHome()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Home
+        </button>
+        <button class="btn btn-danger" onclick="location.href='/logout'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+    </div>
+  </div><!-- end topbar -->
+
+  <div class="container" id="homeView">
+    <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="margin:0; font-size:18px;">Your Servers</h2>
+      <button id="newBtn" class="btn btn-primary" style="padding: 10px 16px;">+ Deploy Server</button>
+    </div>
+    <div class="grid" id="cardsContainer"></div>
+  </div>
+
+  <div class="container" id="serverView">
+    
+    <div class="action-bar">
+      <button id="btnStart" class="btn-act start" onclick="srvAction('start')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> START
+      </button>
+      <button class="btn-act stop" onclick="srvAction('stop')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg> STOP
+      </button>
+      <button class="btn-act restart" onclick="srvAction('restart')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> RESTART
+      </button>
+      <button class="btn-act clear" onclick="apiClearLogs()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> CLEAR
+      </button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tabConsole" onclick="switchTab('console')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+        Console
+      </button>
+      <button class="tab" id="tabFiles" onclick="switchTab('files')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+        Files
+      </button>
+      <button class="tab" id="tabStartup" onclick="switchTab('startup')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>
+        Startup
+      </button>
+    </div>
+
+    <div class="grid-layout" id="viewConsole">
+      <div class="terminal-wrapper">
+        <div class="console" id="logOut">Waiting for daemon...</div>
+        <div class="cmd-box">
+          <span class="prompt">$</span>
+          <input type="text" id="cmdInput" placeholder="Type command..." autocomplete="off" onkeydown="if(event.key === 'Enter') sendInteractiveCmd()">
+          <button class="btn-send" onclick="sendInteractiveCmd()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            SEND
+          </button>
+        </div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg> ADDRESS</div>
+          <div class="val" id="ipTxt">Initializing...</div>
+        </div>
+        <div class="stat-card">
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg> STATUS</div>
+          <div class="val" id="statusTxt">Offline</div>
+        </div>
+        <div class="stat-card">
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg> RAM USAGE</div>
+          <div class="val" id="memTxt">0 MB</div>
+        </div>
+        <div class="stat-card">
+          <div class="label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> UPTIME</div>
+          <div class="val" id="uptimeTxt">Offline</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-layout" id="viewFiles" style="display:none">
+      <div class="table-wrapper">
+        <div class="fm-top">
+          <div class="path" id="pathBar"></div>
+          <div class="actions">
+            <button id="btnBack" class="btn" onclick="goUp()" style="display:none">⬅ Back</button>
+            <button class="btn" onclick="newFolder()">📁 New Folder</button>
+            <button class="btn btn-primary" onclick="document.getElementById('uplFiles').click()">Upload File</button>
+            <button class="btn btn-primary" onclick="document.getElementById('uplFolder').click()">Upload Dir</button>
+          </div>
+        </div>
+        <table class="table">
+          <thead><tr><th>Filename</th><th>Size</th><th style="text-align:right">Actions</th></tr></thead>
+          <tbody id="fileList"></tbody>
+        </table>
+      </div>
+      <input type="file" id="uplFiles" multiple hidden onchange="doUploadFiles(this)">
+      <input type="file" id="uplFolder" webkitdirectory directory multiple hidden onchange="doUploadFolder(this)">
+    </div>
+
+    <div class="grid-layout" id="viewStartup" style="display:none">
+      <div class="table-wrapper" style="padding: 24px; background: var(--bg1); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+        <h3 style="margin-top:0; color:#fff; font-size:16px;">Startup Configuration</h3>
+        <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">Set the main execution file for your server. This file will be triggered when you press Start.</p>
+        
+        <label style="display:block; color:var(--muted); font-size:11px; font-weight:700; margin-bottom:8px; text-transform:uppercase;">Startup File</label>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <input type="text" id="startupInput" placeholder="e.g. main.py" style="flex:1; min-width:200px; padding:12px 16px; border-radius:6px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.2); color:#fff; font-family:'JetBrains Mono', monospace; font-size:13px; outline:none;">
+          <button class="btn btn-primary" onclick="saveStartupTab()" style="padding:12px 24px;">Save Configuration</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="editor-modal">
+    <div class="editor">
+      <div class="editor-top">
+        <div class="fn" id="ed-title">script.py</div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="saveFile()">Save</button>
+          <button class="btn btn-danger" onclick="closeEditor()">Close</button>
+        </div>
+      </div>
+      <div id="ed-area" style="flex: 1; border-top: 1px solid rgba(255,255,255,0.08);"></div>
+    </div>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <h3 id="mTitle">Title</h3>
+      <input id="mIn" autocomplete="off" />
+      <div class="actions" style="justify-content:flex-end;margin-top:20px;">
+        <button class="btn" onclick="closeM()">Cancel</button>
+        <button id="mConfirm" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.2/ace.js"></script>
+
+<script>
+  // ══ CLOCK ══
+  const WX_CODES = {
+    0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
+    51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',
+    71:'❄️',73:'❄️',75:'❄️',77:'🌨️',
+    80:'🌦️',81:'🌧️',82:'⛈️',
+    85:'🌨️',86:'🌨️',
+    95:'⛈️',96:'⛈️',99:'⛈️'
+  };
+  const WX_DESC = {
+    0:'Quang mây',1:'Ít mây',2:'Có mây',3:'Nhiều mây',45:'Sương mù',48:'Sương giá',
+    51:'Mưa phùn',53:'Mưa phùn',55:'Mưa phùn nặng',61:'Mưa nhẹ',63:'Mưa vừa',65:'Mưa to',
+    71:'Tuyết nhẹ',73:'Tuyết',75:'Tuyết dày',77:'Hạt tuyết',
+    80:'Mưa rào',81:'Mưa rào nặng',82:'Mưa rào mạnh',
+    85:'Tuyết rào',86:'Tuyết rào nặng',
+    95:'Giông bão',96:'Giông bão',99:'Giông bão'
+  };
+
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    const d = String(now.getDate()).padStart(2,'0');
+    const mo = String(now.getMonth()+1).padStart(2,'0');
+    const y = now.getFullYear();
+    const days = ['CN','T2','T3','T4','T5','T6','T7'];
+    const el = document.getElementById('clockVal');
+    const el2 = document.getElementById('dateVal');
+    if(el) el.textContent = `${h}:${m}:${s}`;
+    if(el2) el2.textContent = `${days[now.getDay()]} ${d}/${mo}/${y}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  async function loadWeather() {
+    try {
+      // Dùng ip-api.com để lấy toạ độ xấp xỉ, sau đó gọi Open-Meteo (miễn phí, không cần key)
+      const geo = await fetch('https://ipapi.co/json/').then(r=>r.json()).catch(()=>null);
+      const lat = geo?.latitude || 21.03; // mặc định Hà Nội
+      const lon = geo?.longitude || 105.83;
+      const wx = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m&timezone=auto`
+      ).then(r=>r.json());
+      const cw = wx.current_weather;
+      const code = cw.weathercode;
+      const temp = Math.round(cw.temperature);
+      const icon = WX_CODES[code] || '🌡️';
+      const desc = WX_DESC[code] || 'N/A';
+      const city = geo?.city || '';
+      document.getElementById('wxIcon').textContent = icon;
+      document.getElementById('wxTemp').textContent = `${temp}°C`;
+      document.getElementById('wxDesc').textContent = city ? `${desc} · ${city}` : desc;
+    } catch(e) {
+      document.getElementById('wxIcon').textContent = '🌡️';
+      document.getElementById('wxTemp').textContent = '--°';
+      document.getElementById('wxDesc').textContent = 'Offline';
+    }
+  }
+  loadWeather();
+  setInterval(loadWeather, 10 * 60 * 1000); // refresh mỗi 10 phút
+
+  let currentSrv = null, poll = null, currentFile = null;
+  let currentPath = '';
+  let editor = null; // Khai báo Ace Editor
+
+  function isAuthPage(){ return location.pathname.startsWith('/login') || location.pathname.startsWith('/create'); }
+  function safeRedirect(url){ if (!isAuthPage()) location.href = url; }
+
+  function showToast(msg, type = 'info') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:360px;';
+      document.body.appendChild(container);
+    }
+    const colors = { success: '#10b981', danger: '#ef4444', warn: '#f59e0b', info: '#3b82f6' };
+    const icons  = { success: '✅', danger: '❌', warn: '⚠️', info: 'ℹ️' };
+    const t = document.createElement('div');
+    t.style.cssText = `background:#151822;border:1px solid ${colors[type]||colors.info};color:#f8fafc;padding:12px 16px;border-radius:8px;font-size:13px;font-family:inherit;box-shadow:0 8px 24px rgba(0,0,0,0.6);display:flex;align-items:flex-start;gap:10px;animation:fadeIn 0.2s ease;`;
+    t.innerHTML = `<span style="font-size:16px;flex-shrink:0">${icons[type]||icons.info}</span><span style="flex:1;line-height:1.5">${msg}</span><span onclick="this.parentElement.remove()" style="cursor:pointer;color:#64748b;font-size:18px;margin-left:6px;flex-shrink:0">×</span>`;
+    container.appendChild(t);
+    setTimeout(() => { try { t.remove(); } catch(e){} }, 4500);
+  }
+
+  function showConfirm(msg, onYes) {
+    let bd = document.getElementById('confirmBackdrop');
+    if (!bd) {
+      bd = document.createElement('div');
+      bd.id = 'confirmBackdrop';
+      bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;';
+      bd.innerHTML = `<div style="width:100%;max-width:340px;background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:24px;animation:fadeIn 0.2s ease;">
+        <p id="confirmMsg" style="margin:0 0 20px;font-size:14px;color:#f8fafc;line-height:1.6;"></p>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button id="confirmNo"  style="padding:8px 16px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#94a3b8;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;">Cancel</button>
+          <button id="confirmYes" style="padding:8px 16px;border-radius:6px;border:none;background:#ef4444;color:#fff;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;">Confirm</button>
+        </div></div>`;
+      document.body.appendChild(bd);
+      document.getElementById('confirmNo').onclick = () => { bd.style.display = 'none'; };
+    }
+    document.getElementById('confirmMsg').textContent = msg;
+    bd.style.display = 'flex';
+    document.getElementById('confirmYes').onclick = () => { bd.style.display = 'none'; onYes(); };
+  }
+
+  function statusClass(st){
+    st = (st||'').toLowerCase();
+    if(st==='running') return 'running';
+    if(st==='installing' || st==='starting') return 'installing';
+    if(st==='banned') return 'banned';
+    return 'offline';
+  }
+
+  async function loadPythonHost(){
+    const ipTxt = document.getElementById('pyHostTxt');
+    try{
+      const r = await fetch('/servers');
+      if (r.redirected){ safeRedirect(r.url); return; }
+      ipTxt.textContent = `Node: ${location.host}`;
+    }catch(e){
+      ipTxt.textContent = `Node: ${location.host}`;
+    }
+  }
+
+  const AUTO_CLEANUP_DAYS = 3; // Phải khớp với backend
+
+  function getExpiryInfo(lastActive, status) {
+    // Server đang chạy không bị đếm thời gian
+    const st = (status || '').toLowerCase();
+    if (st === 'running' || st === 'installing' || st === 'starting') return null;
+
+    const now = Date.now() / 1000;
+    const cutoff = AUTO_CLEANUP_DAYS * 86400;
+
+    let ts = lastActive;
+    if (!ts) return null; // Chưa có dữ liệu thì không hiện
+
+    const elapsed = now - ts;
+    const remaining = cutoff - elapsed;
+
+    if (remaining < 0) return { label: 'Hết hạn', cls: 'critical', days: 0 };
+    if (remaining < 86400) {
+      const hrs = Math.ceil(remaining / 3600);
+      return { label: `Xóa sau ${hrs}h`, cls: 'critical', days: 0 };
+    }
+    const daysLeft = Math.floor(remaining / 86400);
+    if (daysLeft <= 1) return { label: `Xóa sau ${daysLeft}d`, cls: 'critical', days: daysLeft };
+    if (daysLeft <= 2) return { label: `Còn ${daysLeft} ngày`, cls: 'warn', days: daysLeft };
+    return null; // > 2 ngày → không hiện badge
+  }
+
+  function renderCards(list, container) {
+    list.forEach(s => {
+      s.key = s.key || s.folder;
+      const div = document.createElement('div');
+      div.className = 'card';
+      const cls = statusClass(s.status);
+      const label = (s.status || 'Offline').toUpperCase();
+
+      const expiry = getExpiryInfo(s.last_active, s.status);
+      const expiryBadge = expiry
+        ? `<span class="expiry-badge ${expiry.cls}">⏳ ${escapeHtml(expiry.label)}</span>`
+        : '';
+
+      div.innerHTML = `
+        <div class="srv-title">${escapeHtml(s.title)}</div>
+        <div class="srv-sub">${escapeHtml(s.subtitle || '')}</div>
+        <div class="card-footer">
+          <div class="pill ${cls}" style="margin-top:0"><span class="dot"></span>${label}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${expiryBadge}
+            <button class="btn-remove" title="Xóa server này">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Remove
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Click vào card → mở server (nhưng không kích hoạt nút Remove)
+      div.onclick = (e) => {
+        if (e.target.closest('.btn-remove')) return;
+        openServer(s);
+      };
+
+      // Click nút Remove
+      div.querySelector('.btn-remove').onclick = (e) => {
+        e.stopPropagation();
+        showConfirm(
+          `Bạn có chắc muốn xóa server "${s.title}"?\nHành động này không thể hoàn tác.`,
+          () => removeServer(s)
+        );
+      };
+
+      container.appendChild(div);
+    });
+  }
+
+  async function removeServer(s) {
+    try {
+      const res = await fetch(`/server/remove/${encodeURIComponent(s.key)}`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (data.success) {
+        showToast(`✅ Đã xóa server "${s.title}".`, 'success');
+        loadServers();
+      } else {
+        showToast(data.message || 'Không thể xóa server.', 'danger');
+      }
+    } catch (e) {
+      showToast('Lỗi kết nối khi xóa server.', 'danger');
+    }
+  }
+
+  function makeSectionHeader(label, count) {
+    const el = document.createElement('div');
+    el.style.cssText = 'grid-column:1/-1; display:flex; align-items:center; gap:10px; margin-top:8px;';
+    el.innerHTML = `
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">${escapeHtml(label)}</span>
+      <span style="font-size:11px;font-weight:600;background:var(--bg1);border:1px solid var(--border);border-radius:20px;padding:1px 8px;color:var(--muted);">${count}</span>
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+    `;
+    return el;
+  }
+
+  async function loadServers() {
+    const cont = document.getElementById('cardsContainer');
+    try {
+      const [srRes, meRes] = await Promise.all([fetch('/servers'), fetch('/api/me')]);
+      if (srRes.redirected){ safeRedirect(srRes.url); return; }
+      const d  = await srRes.json();
+      const me = meRes.ok ? await meRes.json() : {};
+
+      cont.innerHTML = '';
+
+      if (me.is_admin) {
+        document.getElementById('adminBtn').style.display = 'inline-flex';
+      }
+
+      const list = d.servers || [];
+      if (list.length === 0) {
+        cont.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);">
+          <div style="font-size:40px;margin-bottom:16px;">🚀</div>
+          <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:8px;">No servers yet</div>
+          <div style="font-size:14px;">Click <b>+ Deploy Server</b> to create your first instance.</div>
+        </div>`;
+        return;
+      }
+
+      if (me.is_admin) {
+        // Admin: tách My Servers vs Users' Servers
+        const mine  = list.filter(s => s.owner === me.username);
+        const others = list.filter(s => s.owner !== me.username);
+
+        if (mine.length > 0) {
+          cont.appendChild(makeSectionHeader('My Servers', mine.length));
+          const myGrid = document.createElement('div');
+          myGrid.style.cssText = 'grid-column:1/-1; display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;';
+          renderCards(mine, myGrid);
+          cont.appendChild(myGrid);
+        }
+
+        if (others.length > 0) {
+          cont.appendChild(makeSectionHeader("Users' Servers", others.length));
+          // Group by owner
+          const byOwner = {};
+          others.forEach(s => { (byOwner[s.owner] = byOwner[s.owner] || []).push(s); });
+          Object.entries(byOwner).sort(([a],[b]) => a.localeCompare(b)).forEach(([owner, srvs]) => {
+            const ownerLabel = document.createElement('div');
+            ownerLabel.style.cssText = 'grid-column:1/-1; font-size:11px; color:var(--muted); font-weight:600; margin-top:4px; padding-left:2px;';
+            ownerLabel.textContent = `@${owner}`;
+            cont.appendChild(ownerLabel);
+            const ownerGrid = document.createElement('div');
+            ownerGrid.style.cssText = 'grid-column:1/-1; display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;';
+            renderCards(srvs, ownerGrid);
+            cont.appendChild(ownerGrid);
+          });
+        }
+      } else {
+        // User thường: hiển thị thẳng không cần section
+        renderCards(list, cont);
+      }
+    } catch(e) {
+      cont.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--danger);">
+        <div style="font-size:14px;">⚠️ Could not load servers. Check connection.</div>
+      </div>`;
+    }
+  }
+
+  function openServer(s) {
+    currentSrv = s; currentPath = '';
+    document.getElementById('homeView').style.display = 'none';
+    document.getElementById('serverView').style.display = 'block';
+    document.getElementById('homeBtn').style.display = 'inline-flex';
+    
+    document.getElementById('startupInput').value = s.startup_file || "";
+    
+    const currentHost = location.host;
+    const currentProtocol = location.protocol;
+    document.getElementById('ipTxt').innerHTML = `<a href="${currentProtocol}//${currentHost}" target="_blank" style="color:var(--accent); text-decoration:none;">${currentHost}</a>`;
+    
+    // ✅ Xóa log + reset stats ngay khi mở server mới, tránh hiển thị dữ liệu server cũ
+    document.getElementById('logOut').textContent = '';
+    document.getElementById('statusTxt').innerHTML = '<span style="color:var(--muted)">—</span>';
+    document.getElementById('memTxt').textContent  = '—';
+    document.getElementById('uptimeTxt').textContent = '—';
+
+    switchTab('console');
+  }
+
+  function goHome() {
+    document.getElementById('homeView').style.display='block';
+    document.getElementById('serverView').style.display='none';
+    document.getElementById('homeBtn').style.display='none';
+    clearInterval(poll); loadServers();
+  }
+
+  function switchTab(t) {
+    document.getElementById('tabConsole').classList.toggle('active', t==='console');
+    document.getElementById('tabFiles').classList.toggle('active', t==='files');
+    document.getElementById('tabStartup').classList.toggle('active', t==='startup');
+    
+    document.getElementById('viewConsole').style.display = t === 'console' ? 'flex' : 'none';
+    document.getElementById('viewFiles').style.display = t === 'files' ? 'flex' : 'none';
+    document.getElementById('viewStartup').style.display = t === 'startup' ? 'flex' : 'none';
+    
+    if(t === 'console') { if(!poll) startPolling(); } else { clearInterval(poll); poll = null; if(t==='files') loadFiles(); }
+  }
+
+  async function startPolling() {
+    if(poll) clearInterval(poll);
+    poll = null;
+    const fn = async () => {
+      if (document.hidden) return; 
+      try {
+        const r = await fetch(`/server/stats/${encodeURIComponent(currentSrv.key)}`);
+        if (r.redirected){ safeRedirect(r.url); return; }
+        const d = await r.json();
+
+        const logArea = document.getElementById('logOut');
+        const isAtBottom = logArea.scrollHeight - logArea.clientHeight <= logArea.scrollTop + 50;
+
+        logArea.textContent = d.logs || "No logs captured...";
+        
+        const st = d.status || 'Offline';
+        const stLower = st.toLowerCase();
+        let color = '#94a3b8';
+        if (stLower === 'running') color = '#10b981';
+        else if (stLower === 'installing' || stLower === 'starting') color = '#f59e0b';
+        else if (stLower === 'banned') color = '#ef4444';
+        
+        document.getElementById('statusTxt').innerHTML = `<span style="color: ${color};">${st}</span>`;
+        document.getElementById('memTxt').textContent = d.mem || '0 MB';
+        document.getElementById('uptimeTxt').textContent = d.uptime || 'Offline';
+
+        const currentHost = location.host;
+        const currentProtocol = location.protocol;
+        document.getElementById('ipTxt').innerHTML = `<a href="${currentProtocol}//${currentHost}" target="_blank" style="color:var(--accent); text-decoration:none;">${currentHost}</a>`;
+        
+        const running = (d.status === "Running" || d.status === "Installing" || d.status === "Starting");
+        document.getElementById('btnStart').disabled = running;
+
+        if(isAtBottom) logArea.scrollTop = logArea.scrollHeight;
+      } catch(e) {}
+    };
+    poll = setInterval(fn, 2000); fn();
+  }
+
+  async function srvAction(act) { await fetch(`/server/action/${encodeURIComponent(currentSrv.key)}/${act}`, {method:'POST'}); }
+
+  async function apiClearLogs() {
+    showConfirm("Bạn có chắc muốn xóa lịch sử console?", async () => {
+      document.getElementById('logOut').textContent = "";
+      try {
+        await fetch(`/server/clear-logs/${encodeURIComponent(currentSrv.key)}`, { method: 'POST' });
+        showToast("Logs cleared.", "success");
+      } catch(e) {
+        showToast("Could not clear logs on server.", "danger");
+      }
+    });
+  }
+  
+  function sendInteractiveCmd() {
+    const input = document.getElementById('cmdInput');
+    const cmd = input.value.trim();
+    if(!cmd) return;
+    showToast(`Command sent: ${escapeHtml(cmd)} <br><small><i>Interactive terminal is currently in visual-only mode.</i></small>`, "info");
+    input.value = "";
+  }
+
+  async function saveStartupTab() {
+    const v = document.getElementById('startupInput').value.trim();
+    try {
+      await fetch(`/server/set-startup/${encodeURIComponent(currentSrv.key)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({file:v}) });
+      currentSrv.startup_file = v; 
+      showToast("Startup configuration saved ✅", "success");
+    } catch(e) {
+      showToast("Failed to save startup configuration.", "danger");
+    }
+  }
+
+  async function loadFiles() {
+    const r = await fetch(`/files/list/${encodeURIComponent(currentSrv.key)}?path=${encodeURIComponent(currentPath)}`);
+    if (r.redirected){ safeRedirect(r.url); return; }
+    const data = await r.json();
+    if (!data.success) { currentPath = ''; return loadFiles(); }
+
+    document.getElementById("btnBack").style.display = (currentPath && currentPath.length > 0) ? "inline-flex" : "none";
+    const parts = (data.path || '').split('/').filter(Boolean);
+    let acc = ''; const crumbs = [`<span class="crumb"><a href="javascript:void(0)" onclick="jumpPath('')">~</a></span>`];
+    for (const p of parts) { acc = acc ? (acc + '/' + p) : p; crumbs.push(`<span class="sep">/</span><span class="crumb"><a href="javascript:void(0)" onclick="jumpPath('${escapeAttr(acc)}')">${escapeHtml(p)}</a></span>`); }
+    document.getElementById('pathBar').innerHTML = crumbs.join('');
+    const rows = [];
+    
+    const folderIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path></svg>`;
+    const fileIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+
+    for (const d of (data.dirs || [])) {
+      const name = d.name;
+      rows.push(`<tr><td><span class="name-link" onclick="openFolder('${escapeAttr(name)}')">${folderIcon} ${escapeHtml(name)}</span></td><td style="color:var(--muted); font-size:12px;">Folder</td><td class="row-actions"><button class="btn btn-mini" onclick="renameDir('${escapeAttr(name)}')">Rename</button> <button class="btn btn-mini btn-danger" onclick="deleteDir('${escapeAttr(name)}')">Delete</button></td></tr>`);
+    }
+    
+    for (const f of (data.files || [])) {
+      const relFile = currentPath ? `${currentPath}/${f.name}` : f.name;
+      
+      // Hiện nút Extract nếu là file zip
+      let extractBtn = '';
+      if (f.name.toLowerCase().endsWith('.zip')) {
+        extractBtn = `<button class="btn btn-mini btn-primary" style="background: #10b981; color: #fff; border: none;" onclick="extractFilePrompt('${escapeAttr(f.name)}')">Extract</button> `;
+      }
+      
+      rows.push(`<tr><td><span class="name-link" onclick="openEditor('${escapeAttr(relFile)}')">${fileIcon} ${escapeHtml(f.name)}</span></td><td style="color:var(--muted); font-size:12px;">${escapeHtml(f.size || '')}</td><td class="row-actions">${extractBtn}<button class="btn btn-mini" onclick="renameFilePrompt('${escapeAttr(f.name)}')">Rename</button> <button class="btn btn-mini btn-danger" onclick="deleteFilePrompt('${escapeAttr(f.name)}')">Delete</button></td></tr>`);
+    }
+    document.getElementById('fileList').innerHTML = rows.join('');
+  }
+
+  function openFolder(name) { currentPath = currentPath ? (currentPath + '/' + name) : name; loadFiles(); }
+  function jumpPath(p) { currentPath = p || ''; loadFiles(); }
+  function goUp() { if (!currentPath) return; const parts = currentPath.split('/').filter(Boolean); parts.pop(); currentPath = parts.join('/'); loadFiles(); }
+
+  function newFolder() { openM("Create Directory", "", async (v) => { await fetch(`/files/mkdir/${encodeURIComponent(currentSrv.key)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: currentPath, name: v}) }); loadFiles(); closeM(); }); }
+  function renameDir(oldName) { openM("Rename Directory", oldName, async (v) => { await fetch(`/files/rename/${encodeURIComponent(currentSrv.key)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: currentPath, old: oldName, new: v}) }); loadFiles(); closeM(); }); }
+  function deleteDir(name) { showConfirm(`Delete directory "${name}"?`, async () => { await fetch(`/files/delete/${encodeURIComponent(currentSrv.key)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: currentPath, name, kind:'dir'}) }); loadFiles(); }); }
+  function renameFilePrompt(oldName) { openM("Rename File", oldName, async (v) => { await fetch(`/files/rename/${encodeURIComponent(currentSrv.key)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: currentPath, old: oldName, new: v}) }); loadFiles(); closeM(); }); }
+  function deleteFilePrompt(name) { showConfirm(`Delete file "${name}"?`, async () => { await fetch(`/files/delete/${encodeURIComponent(currentSrv.key)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path: currentPath, name, kind:'file'}) }); loadFiles(); }); }
+
+  function extractFilePrompt(name) { 
+    showConfirm(`Bạn có muốn giải nén file "${name}" vào thư mục hiện tại không?`, async () => { 
+      showToast(`Đang giải nén ${name}... vui lòng đợi.`, "info");
+      try {
+        const res = await fetch(`/files/extract/${encodeURIComponent(currentSrv.key)}`, { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({path: currentPath, file: name}) 
+        }); 
+        const data = await res.json().catch(()=>({}));
+        if(data.success !== false) {
+          showToast(`Giải nén thành công!`, "success");
+          loadFiles();
+        } else {
+          showToast(data.message || `Lỗi khi giải nén file!`, "danger");
+        }
+      } catch (e) {
+        showToast(`Lỗi kết nối khi giải nén!`, "danger");
+      }
+    }); 
+  }
+
+  async function doUploadFiles(input) {
+    if (!input.files || !input.files.length) return;
+    const fd = new FormData();
+    for (const f of input.files) fd.append("files", f);
+    const res = await fetch(`/files/upload/${encodeURIComponent(currentSrv.key)}?path=${encodeURIComponent(currentPath)}`, { method:"POST", body: fd });
+    const data = await res.json().catch(()=>({}));
+    input.value = "";
+    if (data.warning) showToast(data.warning, "warn");
+    else if (data.saved > 0) showToast(`Uploaded ${data.saved} file(s) successfully.`, "success");
+    loadFiles();
+  }
+
+  async function doUploadFolder(input) {
+    if (!input.files || !input.files.length) return;
+    const fd = new FormData();
+    for (const f of input.files) { fd.append("files", f); fd.append("relpaths", f.webkitRelativePath || f.name); }
+    const res = await fetch(`/files/upload/${encodeURIComponent(currentSrv.key)}?path=${encodeURIComponent(currentPath)}`, { method:"POST", body: fd });
+    const data = await res.json().catch(()=>({}));
+    input.value = "";
+    if (data.warning) showToast(data.warning, "warn");
+    else if (data.saved > 0) showToast(`Uploaded ${data.saved} file(s) successfully.`, "success");
+    loadFiles();
+  }
+
+  async function openEditor(name) {
+    currentFile = name; document.getElementById('ed-title').textContent = name;
+    const res = await fetch(`/files/content/${encodeURIComponent(currentSrv.key)}?file=${encodeURIComponent(name)}`);
+    if (res.redirected){ safeRedirect(res.url); return; }
+    const data = await res.json();
+    
+    // Tự động cấu hình màu hiển thị code tuỳ thuộc đuôi file
+    if (name.endsWith('.json')) editor.session.setMode("ace/mode/json");
+    else if (name.endsWith('.js')) editor.session.setMode("ace/mode/javascript");
+    else if (name.endsWith('.html')) editor.session.setMode("ace/mode/html");
+    else if (name.endsWith('.txt') || name.endsWith('.log')) editor.session.setMode("ace/mode/text");
+    else editor.session.setMode("ace/mode/python"); 
+
+    editor.setValue(data.content || '', -1); // Gắn code và đẩy chuột lên đầu file
+    document.getElementById('editor-modal').style.display = 'flex';
+    
+    // Đảm bảo Editor tính toán lại kích thước chuẩn trên giao diện
+    setTimeout(() => {
+        editor.resize();
+    }, 50);
+  }
+
+  async function saveFile() {
+    const content = editor.getValue();
+    await fetch(`/files/save/${encodeURIComponent(currentSrv.key)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({file: currentFile, content: content}) });
+    showToast("Deployed Changes ✅", "success");
+  }
+  function closeEditor(){ document.getElementById('editor-modal').style.display='none'; }
+
+  function openM(t, v, cb) { document.getElementById('modalBackdrop').style.display='flex'; document.getElementById('mTitle').textContent=t; const input = document.getElementById('mIn'); input.value = v || ""; document.getElementById('mConfirm').onclick=()=>cb(input.value); setTimeout(() => input.focus(), 100); }
+  function closeM(){ document.getElementById('modalBackdrop').style.display='none'; }
+
+  document.getElementById('newBtn').onclick = () => openM("Instance Name", "", async (v) => {
+    const res = await fetch('/add', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:v}) });
+    const d = await res.json().catch(()=>({success:false,message:'Error'}));
+    if(!d.success){ showToast(d.message || 'Failed', 'danger'); return; }
+    closeM(); loadServers(); loadPythonHost();
+  });
+
+  function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;"); }
+  function escapeAttr(s){ return escapeHtml(s).split('\\').join('\\\\'); }
+
+  document.addEventListener('DOMContentLoaded', ()=>{ 
+    loadServers(); 
+    loadPythonHost(); 
+
+    // Khởi tạo và thiết lập thông số fix lỗi tràn viền cho Ace Editor
+    editor = ace.edit("ed-area");
+    editor.setTheme("ace/theme/tomorrow_night_eighties");
+    editor.session.setMode("ace/mode/python");
+    editor.setOptions({
+      fontSize: "14px", // Tăng size cho dễ nhìn
+      fontFamily: "'JetBrains Mono', monospace",
+      showPrintMargin: false, // Tắt dòng kẻ mờ
+      wrap: false, // TUYỆT ĐỐI không tự xuống dòng
+      useWorker: false, // Tắt syntax checker để tăng hiệu năng trên đt
+      scrollPastEnd: 0.5
+    });
+  });
+</script>
+
+</body>
+</html>
