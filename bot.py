@@ -609,10 +609,10 @@ def api_create():
         db = load_users()
 
         current_user_count = len(db.get("users", []))
-        if current_user_count >= 0:
+        if current_user_count >= 10:
             return jsonify({
                 "success": False,
-                "message": "Server đã đạt giới hạn tối đa (0/0 người dùng). Không thể đăng ký thêm!"
+                "message": "Server đã đạt giới hạn tối đa (10/10 người dùng). Không thể đăng ký thêm!"
             }), 403
 
         if find_user(db, username):
